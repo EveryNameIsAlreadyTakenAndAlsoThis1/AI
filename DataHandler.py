@@ -63,7 +63,7 @@ class DataHandler():
             writer.writerow(self.epsilons[i])
             temp6=["Learning rate ",""]
             writer.writerow(temp6)
-            writer.writerow(self.epsilons[i])
+            writer.writerow(self.lr[i])
         self.lastWrite+=self.newAdded
         self.newAdded=0
         file.close()
