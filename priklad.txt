@@ -47,3 +47,8 @@ def train(file):
     env.close()
     torch.save(model, "networkTest.pt")
     print("Priemerne skore: " + str(np.average(scores)))
+
+
+    #Vizualizácia zozbieraných dát
+    visualizer = Visualizer("test_data.csv")
+    visualizer.visualize_data(True, 100)
