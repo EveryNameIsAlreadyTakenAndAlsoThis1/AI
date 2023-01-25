@@ -1,0 +1,63 @@
+import gym
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from gym.wrappers import AtariPreprocessing, FrameStack
+
+
+GAME_COUNT = 5
+state_shape = (4, 84, 84)
+action_count = 6
+
+# Trening
+# https://www.gymlibrary.dev/environments/atari/pong/
+env = gym.make("ALE/Pong-v5", frameskip=1, full_action_space=False)
+
+env = AtariPreprocessing(env, frame_skip=4) #https://www.gymlibrary.dev/api/wrappers/#available-wrappers
+env = FrameStack(env, 4)
+
+scores = []
+
+experience_replay = ExperienceReplay(10000, state_shape)
+#model = Net()
+model = torch.load("network15.pt")
+agent = AgentDQN.load_from_file("agent.pkl", experience_replay) # AgentDQN(0.99, action_count, model, experience_replay, 0.0000005, epsilon_min=0.02, epsilon_dec=0.00001)
+
+iterOdPoslednehoUlozenia = 1
+bestScore = 1
+
+for i in range(1, GAME_COUNT):
+    score = 0
+    terminal, truncated = False, False
+    state, _ = env.reset()
+    state = torch.from_numpy(np.asarray(state)).double()
+
+    # GAME LOOP
+    while not terminal and not truncated:
+        action = agent.choose_action(state)
+        state_, reward, terminal, truncated, info = env.step(action)
+        state_ = torch.from_numpy(np.asarray(state_)).double()
+        agent.store(state, action, reward, state_, terminal)
+        agent.learn()
+        state = state_
+        score += reward
+
+    scores.append(score)
+
+
+    print('Episode: ', i, '\t\tscore: ', score, '\t\taverage score:' , np.average(scores[-100:]), '\t\tepsilon: ', agent.epsilon)
+
+
+    if iterOdPoslednehoUlozenia > 100 or score > bestScore:
+      agent.save_to_file("agent" + i + "_iter_score_"+ score + "_od_ulozenia_" + iterOdPoslednehoUlozenia + ".pkl")
+      iterOdPoslednehoUlozenia = 0
+
+    if score > bestScore:
+      bestScore = score
+
+    iterOdPoslednehoUlozenia += 1
+env.close()
+agent.save_to_file("agent2.pkl")
+torch.save(model, "network16.pt")
+print("Priemerne skore: " + str(np.average(scores)))
